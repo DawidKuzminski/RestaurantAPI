@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPI.Core.Dto;
@@ -48,5 +49,15 @@ public class RestaurantController : ControllerBase
 		var restaurantDto = _mapper.Map<RestauantDto>(restaurant);
 
 		return Ok(restaurantDto);
+	}
+
+	[HttpPost]
+	public ActionResult CreateRestaurant([FromBody] CreateRestaurantRequest request)
+	{
+		var restaurant = _mapper.Map<RestaurantEntity>(request);
+		_dbContext.Add(restaurant);
+		_dbContext.SaveChanges();
+
+		return Created($"/api/restaurant/{restaurant.Id}", null);
 	}
 }

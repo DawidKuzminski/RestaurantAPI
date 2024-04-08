@@ -14,5 +14,8 @@ public class RestaurantMappingProfile : Profile
             .ForMember(m => m.PostalCode, c => c.MapFrom(s => s.Address.PostalCode));
 
         CreateMap<DishEntity, DishDto>();
+
+        CreateMap<CreateRestaurantRequest, RestaurantEntity>()
+            .ForMember(r => r.Address, c => c.MapFrom(a => new AddressEntity { City = a.City, Street = a.Street, PostalCode = a.PostalCode }));
 	}
 }
