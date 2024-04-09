@@ -1,9 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using NLog;
+using NLog.Web;
 using RestaurantAPI.Infrastructure.Database;
+using RestaurantAPI.Infrastructure.Middleware;
 using RestaurantAPI.Infrastructure.Services;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
 
 var builder = WebApplication.CreateBuilder(args);
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -15,6 +20,11 @@ builder.Services.AddScoped<RestaurantSeeder>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<ErrorHandlingMiddleware>();
+
+
+builder.Logging.ClearProviders();
+builder.Host.UseNLog();
 
 var app = builder.Build();
 
@@ -27,6 +37,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

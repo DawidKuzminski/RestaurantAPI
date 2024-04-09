@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Azure.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RestaurantAPI.Core.Dto;
 using RestaurantAPI.Core.DTO;
 using RestaurantAPI.Core.Entity;
@@ -13,11 +14,13 @@ public class RestaurantService : IRestaurantService
 {
 	private readonly RestaurantDbContext _dbContext;
 	private readonly IMapper _mapper;
+	private readonly ILogger<RestaurantService> _logger;
 
-	public RestaurantService(RestaurantDbContext dbContext, IMapper mapper)
+	public RestaurantService(RestaurantDbContext dbContext, IMapper mapper, ILogger<RestaurantService> logger)
 	{
 		_dbContext = dbContext;
 		_mapper = mapper;
+		_logger = logger;
 	}
 
 	public RestauantDto GetById(int id)
