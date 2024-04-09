@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services;
+using RestaurantAPI.Infrastructure.Services.Abstraction;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,8 @@ builder.Services.AddDbContext<RestaurantDbContext>(opt => opt.UseSqlServer(datab
 builder.Services.AddScoped<RestaurantSeeder>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 
 var app = builder.Build();
 

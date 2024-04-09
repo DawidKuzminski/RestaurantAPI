@@ -1,6 +1,4 @@
-﻿using RestaurantAPI.Core.Entities;
-
-namespace RestaurantAPI.Core.Dto;
+﻿namespace RestaurantAPI.Core.Dto;
 
 public class DishDto
 {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestaurantAPI.Core.Entities;
+using RestaurantAPI.Core.Entity;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RestaurantAPI.Infrastructure.Database;
