@@ -22,5 +22,8 @@ public class RestaurantMappingProfile : Profile
 		CreateMap<DishEntity, DishDto>();
 		CreateMap<DishDto, DishEntity>();
 		CreateMap<CreateDishRequest, DishEntity>();
+
+		CreateMap<RegisterUserRequest, UserEntity>()
+			.ForMember(dest => dest.Password, act => act.Ignore());
 	}
 }

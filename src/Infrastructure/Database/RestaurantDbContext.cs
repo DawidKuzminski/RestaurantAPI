@@ -8,6 +8,9 @@ public class RestaurantDbContext : DbContext
 	public DbSet<RestaurantEntity> Restaurants { get; set; }
     public DbSet<AddressEntity> Addresses { get; set; }
     public DbSet<DishEntity> Dishes { get; set; }
+    public DbSet<RoleEntity> Roles { get; set; }
+    public DbSet<UserEntity> Users { get; set; }
+
 
     public RestaurantDbContext(DbContextOptions<RestaurantDbContext> options)
 		: base(options)
@@ -17,12 +20,14 @@ public class RestaurantDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
-		OnRestaurantModelCreating(modelBuilder);
-		OnDishModelCreating(modelBuilder);
-		OnAddressModelCreating(modelBuilder);
+		OnRestaurantEntityCreating(modelBuilder);
+		OnDishEntityCreating(modelBuilder);
+		OnAddressEntityCreating(modelBuilder);
+		OnUserEntityCreating(modelBuilder);
+		OnRoleEntityCreating(modelBuilder);
 	}
 
-	private static void OnRestaurantModelCreating(ModelBuilder modelBuilder)
+	private static void OnRestaurantEntityCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.Entity<RestaurantEntity>()
 			.Property(r => r.Name)
@@ -30,7 +35,7 @@ public class RestaurantDbContext : DbContext
 			.HasMaxLength(256);
 	}
 
-	private static void OnDishModelCreating(ModelBuilder modelBuilder)
+	private static void OnDishEntityCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.Entity<DishEntity>()
 			.Property(d => d.Name)
@@ -38,7 +43,7 @@ public class RestaurantDbContext : DbContext
 			.HasMaxLength(256);
 	}
 
-	private static void OnAddressModelCreating(ModelBuilder modelBuilder)
+	private static void OnAddressEntityCreating(ModelBuilder modelBuilder)
 	{
 		modelBuilder.Entity<AddressEntity>()
 			.Property(a => a.City)
@@ -47,5 +52,23 @@ public class RestaurantDbContext : DbContext
 		modelBuilder.Entity<AddressEntity>()
 			.Property(a => a.Street)
 			.HasMaxLength(256);
+	}
+
+	private static void OnUserEntityCreating(ModelBuilder modelBuilder)
+	{
+		modelBuilder.Entity<UserEntity>()
+			.Property(x => x.Email)
+			.IsRequired();
+
+		modelBuilder.Entity<UserEntity>()
+			.Property(x => x.Password)
+			.IsRequired();
+	}
+
+	private static void OnRoleEntityCreating(ModelBuilder modelBuilder)
+	{
+		modelBuilder.Entity<RoleEntity>()
+			.Property(x => x.Name)
+			.IsRequired();
 	}
 }

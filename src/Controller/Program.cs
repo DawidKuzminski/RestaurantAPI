@@ -1,27 +1,60 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
+using RestaurantAPI.Core.DTO;
+using RestaurantAPI.Core.Entity;
+using RestaurantAPI.Infrastructure;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Middleware;
 using RestaurantAPI.Infrastructure.Services;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
+using RestaurantAPI.Infrastructure.Validation;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
+var authSettings = new AuthenticationSettings();
+builder.Configuration.GetSection("Authentication").Bind(authSettings);
+
+builder.Services.AddAuthentication(opt =>
+{
+	opt.DefaultAuthenticateScheme = "Bearer";
+	opt.DefaultScheme = "Bearer";
+	opt.DefaultChallengeScheme = "Bearer";
+}).AddJwtBearer(cfg =>
+{
+	cfg.RequireHttpsMetadata = false;
+	cfg.SaveToken = true;
+	cfg.TokenValidationParameters = new TokenValidationParameters
+	{
+		ValidIssuer = authSettings.Issuer,
+		ValidAudience = authSettings.Issuer,
+		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authSettings.Jwk))
+	};
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
 
 var databaseConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<RestaurantDbContext>(opt => opt.UseSqlServer(databaseConnStr));
-builder.Services.AddScoped<RestaurantSeeder>();
+builder.Services.AddDbContext<RestaurantDbContext>(opt => opt.UseSqlServer(databaseConnStr, x => x.MigrationsAssembly("RestaurantAPI.Infrastructure")));
+builder.Services.AddScoped<InitDataSeeder>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IDishService, DishService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
+builder.Services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
+builder.Services.AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>();
+
 builder.Services.AddSwaggerGen();
 
 builder.Logging.ClearProviders();
@@ -33,12 +66,14 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-	RestaurantSeeder seeder = scope.ServiceProvider.GetRequiredService<RestaurantSeeder>();
+	InitDataSeeder seeder = scope.ServiceProvider.GetRequiredService<InitDataSeeder>();
 	seeder.Seed();
 }
 
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.UseAuthentication();
 app.UseHttpsRedirection();
 app.UseSwagger();
 app.UseSwaggerUI(c =>

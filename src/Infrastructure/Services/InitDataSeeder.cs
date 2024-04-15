@@ -3,11 +3,11 @@ using RestaurantAPI.Infrastructure.Database;
 
 namespace RestaurantAPI.Infrastructure.Services;
 
-public class RestaurantSeeder
+public class InitDataSeeder
 {
 	private readonly RestaurantDbContext _dbContext;
 
-	public RestaurantSeeder(RestaurantDbContext dbContext)
+	public InitDataSeeder(RestaurantDbContext dbContext)
 	{
 		_dbContext = dbContext;
 	}
@@ -16,6 +16,12 @@ public class RestaurantSeeder
 	{
 		if (_dbContext.Database.CanConnect())
 		{
+			if(!_dbContext.Roles.Any()) 
+			{
+				_dbContext.Roles.AddRange(InitRoles());
+				_dbContext.SaveChanges();
+			}
+
 			if (!_dbContext.Restaurants.Any())
 			{
 				_dbContext.Restaurants.AddRange(GetInitRestaurants());
@@ -58,4 +64,15 @@ public class RestaurantSeeder
 			}
 		};
 	}
+
+	private IReadOnlyList<RoleEntity> InitRoles()
+	{
+		return new List<RoleEntity>
+		{
+			new RoleEntity { Name = "User"},
+			new RoleEntity { Name = "Manager"},
+			new RoleEntity { Name = "Admin"}
+		};
+	}
+
 }
