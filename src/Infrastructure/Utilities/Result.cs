@@ -9,7 +9,9 @@ public enum ResultStatus
 
 public enum ResultStatusCode
 {
-    Ok = 0
+    Ok = 0,
+	NoDataFound,
+	DataAlreadyExist
 }
 
 public interface IResult
@@ -17,6 +19,16 @@ public interface IResult
     public ResultStatus Status { get; init; }
     public ResultStatusCode StatusCode { get; init; }
     public string Message { get; init; }
+
+	public bool IsSuccess => Status == ResultStatus.Success;
+	public bool IsNotSuccess => Status != ResultStatus.Success;
+	public bool IsWarning() => Status == ResultStatus.Warning;
+	public bool IsError() => Status != ResultStatus.Error;
+}
+
+public interface IResult<T> : IResult
+{
+	protected T Data { get; init; }
 }
 
 public class Result(ResultStatus status, ResultStatusCode statusCode, string message) : IResult
@@ -34,11 +46,24 @@ public class Result(ResultStatus status, ResultStatusCode statusCode, string mes
 
 	public static Result Error(ResultStatusCode statusCode) => new(ResultStatus.Error, statusCode, string.Empty);
 	public static Result Error(ResultStatusCode statusCode, string message) => new(ResultStatus.Error, statusCode, message);
+}
 
-    public bool IsSuccess => Status == ResultStatus.Success;
-    public bool IsNotSuccess => Status != ResultStatus.Success;
-    public bool IsWarning() => Status == ResultStatus.Warning;
-    public bool IsError() => Status != ResultStatus.Error;
+public class Result<T>(T data, ResultStatus status, ResultStatusCode statusCode, string message) : IResult<T>
+{
+	public T Data { get; init; } = data;
+	public ResultStatus Status { get; init; } = status;
+	public ResultStatusCode StatusCode { get; init; } = statusCode;
+	public string Message { get; init; } = message;
+
+	public static Result<T> Success(T data) => new(data, ResultStatus.Success, ResultStatusCode.Ok, string.Empty);
+	public static Result<T> Success(T data, ResultStatusCode statusCode) => new(data, ResultStatus.Success, statusCode, string.Empty);
+	public static Result<T> Success(T data,ResultStatusCode statusCode, string message) => new(data, ResultStatus.Success, statusCode, message);
+
+	public static Result<T> Warning(T data, ResultStatusCode statusCode) => new(data, ResultStatus.Warning, statusCode, string.Empty);
+	public static Result<T> Warning(T data, ResultStatusCode statusCode, string message) => new(data, ResultStatus.Warning, statusCode, message);
+
+	public static Result<T> Error(T data, ResultStatusCode statusCode) => new(data, ResultStatus.Error, statusCode, string.Empty);
+	public static Result<T> Error(T data, ResultStatusCode statusCode, string message) => new(data, ResultStatus.Error, statusCode, message);
 }
 
 public static class ResultStatusCodeExtension

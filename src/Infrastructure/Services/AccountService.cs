@@ -5,6 +5,7 @@ using RestaurantAPI.Core.Entity;
 using RestaurantAPI.Core.Model;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
+using RestaurantAPI.Infrastructure.Utilities;
 
 namespace RestaurantAPI.Infrastructure.Services;
 public class AccountService : IAccountService
@@ -20,8 +21,12 @@ public class AccountService : IAccountService
 		_passwordHasher = passwordHasher;
 	}
 
-	public bool RegisterUser(RegisterUserRequest request)
+	public IResult RegisterUser(RegisterUserRequest request)
 	{
+		bool isUserAlreadyExist = _dbContext.Users.Any(x => x.Email == request.Email);
+		if (isUserAlreadyExist)
+			return Result.Success(ResultStatusCode.DataAlreadyExist);
+
 		var userEntity = _mapper.Map<UserEntity>(request);
 		userEntity.RoleId = (int)Role.User;
 		userEntity.Password = _passwordHasher.HashPassword(userEntity, request.Password);
@@ -29,14 +34,14 @@ public class AccountService : IAccountService
 		_dbContext.Users.Add(userEntity);
 		_dbContext.SaveChanges();
 
-		return true;
+		return Result.Success();
 	}
 
-	public string LoginUser(LoginUserRequest request)
+	public IResult<string> LoginUser(LoginUserRequest request)
 	{
 		var userEntity = _dbContext.Users.FirstOrDefault(x => x.Email == request.Email);
 		if (userEntity is null)
-			return null;
+			return Result<string>.Success(null, ResultStatusCode.NoDataFound);
 
 
 	}

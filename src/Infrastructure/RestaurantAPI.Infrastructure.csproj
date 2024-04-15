@@ -28,4 +28,8 @@
     <ProjectReference Include="..\Core\RestaurantAPI.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Validation\" />
+  </ItemGroup>
+
 </Project>
