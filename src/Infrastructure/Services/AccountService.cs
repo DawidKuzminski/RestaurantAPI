@@ -1,11 +1,16 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RestaurantAPI.Core.DTO;
 using RestaurantAPI.Core.Entity;
 using RestaurantAPI.Core.Model;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
 using RestaurantAPI.Infrastructure.Utilities;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace RestaurantAPI.Infrastructure.Services;
 public class AccountService : IAccountService
@@ -13,12 +18,14 @@ public class AccountService : IAccountService
 	private readonly RestaurantDbContext _dbContext;
 	private readonly IMapper _mapper;
 	private readonly IPasswordHasher<UserEntity> _passwordHasher;
+	private readonly AuthenticationSettings _authenticationSettings;
 
-	public AccountService(RestaurantDbContext dbContext, IMapper mapper, IPasswordHasher<UserEntity> passwordHasher)
+	public AccountService(RestaurantDbContext dbContext, IMapper mapper, IPasswordHasher<UserEntity> passwordHasher, AuthenticationSettings authenticationSettings)
 	{
 		_dbContext = dbContext;
 		_mapper = mapper;
 		_passwordHasher = passwordHasher;
+		_authenticationSettings = authenticationSettings;
 	}
 
 	public IResult RegisterUser(RegisterUserRequest request)
@@ -39,11 +46,40 @@ public class AccountService : IAccountService
 
 	public IResult<string> LoginUser(LoginUserRequest request)
 	{
-		var userEntity = _dbContext.Users.FirstOrDefault(x => x.Email == request.Email);
+		var userEntity = _dbContext
+			.Users
+			.Include(x => x.Role)
+			.FirstOrDefault(x => x.Email == request.Email);
 		if (userEntity is null)
-			return Result<string>.Success(null, ResultStatusCode.NoDataFound);
+			return Result<string>.Success(ResultStatusCode.NoDataFound);
 
+		var verifyPasswordResult = _passwordHasher.VerifyHashedPassword(userEntity, userEntity.Password, request.Password);
+		if (verifyPasswordResult == PasswordVerificationResult.Failed)
+			return Result<string>.Success(ResultStatusCode.NoDataFound);
 
+		var claims = new List<Claim>
+		{
+			new Claim(ClaimTypes.NameIdentifier, userEntity.Id.ToString()),
+			new Claim(ClaimTypes.Name, $"{userEntity.FirstName} {userEntity.LastName}"),
+			new Claim(ClaimTypes.Email, userEntity.Email),
+			new Claim(ClaimTypes.Role, userEntity.Role.Id.ToString()),
+			new Claim("nationality", userEntity.Nationality)
+		};
+
+		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authenticationSettings.Jwk));
+		var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+		var expires = DateTime.UtcNow.AddDays(_authenticationSettings.JwtExpireDays);
+
+		var securityToken = new JwtSecurityToken(_authenticationSettings.Issuer,
+			_authenticationSettings.Issuer,
+			claims,
+			expires: expires,
+			signingCredentials: cred);
+
+		var tokenHandler = new JwtSecurityTokenHandler();
+		var token = tokenHandler.WriteToken(securityToken);
+
+		return Result<string>.Success(token);
 	}
 
 }

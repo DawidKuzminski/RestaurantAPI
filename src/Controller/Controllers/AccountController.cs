@@ -19,12 +19,19 @@ public class AccountController : ControllerBase
 	public ActionResult RegisterUser([FromBody] RegisterUserRequest request)
 	{
         var registerUserResult = _accountService.RegisterUser(request);
+        if (registerUserResult.IsNotSuccess)
+            return BadRequest();
+
         return Ok();
 	}
 
     [HttpPost("login")]
-    public ActionResult Login([FromBody] LoginUserRequest request)
+    public ActionResult<string> Login([FromBody] LoginUserRequest request)
     {
+        var loginUserResult = _accountService.LoginUser(request);
+        if(loginUserResult.IsNotSuccess)
+            return BadRequest();
 
+        return Ok(loginUserResult.Data);
     }
 }

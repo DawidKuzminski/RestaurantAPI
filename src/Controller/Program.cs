@@ -12,7 +12,6 @@ using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Middleware;
 using RestaurantAPI.Infrastructure.Services;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
-using RestaurantAPI.Infrastructure.Validation;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,8 +39,7 @@ builder.Services.AddAuthentication(opt =>
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
-
+builder.Services.AddSingleton(authSettings);
 var databaseConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<RestaurantDbContext>(opt => opt.UseSqlServer(databaseConnStr, x => x.MigrationsAssembly("RestaurantAPI.Infrastructure")));
 builder.Services.AddScoped<InitDataSeeder>();
@@ -53,7 +51,6 @@ builder.Services.AddScoped<IDishService, DishService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
 builder.Services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
-builder.Services.AddScoped<IValidator<RegisterUserRequest>, RegisterUserRequestValidator>();
 
 builder.Services.AddSwaggerGen();
 
