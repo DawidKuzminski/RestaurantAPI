@@ -35,8 +35,13 @@ public class AccountService : IAccountService
 			return Result.Success(ResultStatusCode.DataAlreadyExist);
 
 		var userEntity = _mapper.Map<UserEntity>(request);
-		userEntity.RoleId = (int)Role.User;
 		userEntity.Password = _passwordHasher.HashPassword(userEntity, request.Password);
+
+		var userRole = _dbContext.Roles.FirstOrDefault(x => x.Role == Role.User);
+		if (userRole is null)
+			throw new NullReferenceException($"Cannot found role: {Role.User} - {Role.User.ToString()}");
+		userEntity.RoleId = userRole.Id;
+		userEntity.Role = userRole;		
 
 		_dbContext.Users.Add(userEntity);
 		_dbContext.SaveChanges();
@@ -62,7 +67,7 @@ public class AccountService : IAccountService
 			new Claim(ClaimTypes.NameIdentifier, userEntity.Id.ToString()),
 			new Claim(ClaimTypes.Name, $"{userEntity.FirstName} {userEntity.LastName}"),
 			new Claim(ClaimTypes.Email, userEntity.Email),
-			new Claim(ClaimTypes.Role, userEntity.Role.Id.ToString()),
+			new Claim(ClaimTypes.Role, userEntity.Role.Role.ToString()),
 			new Claim("nationality", userEntity.Nationality)
 		};
 

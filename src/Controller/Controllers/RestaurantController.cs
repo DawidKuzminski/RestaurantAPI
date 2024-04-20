@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,8 @@ using RestaurantAPI.Infrastructure.Services.Abstraction;
 namespace RestaurantAPI.Controllers;
 
 [Route("api/restaurants")]
+[ApiController]
+[Authorize]
 public class RestaurantController : ControllerBase
 {
 	private readonly IRestaurantService _restaurantService;
@@ -40,6 +43,7 @@ public class RestaurantController : ControllerBase
 	}
 
 	[HttpPost]
+	[Authorize(Roles = "Admin,Manager")]
 	public ActionResult CreateRestaurant([FromBody] CreateRestaurantRequest request)
 	{
 		if(!ModelState.IsValid)
@@ -51,6 +55,7 @@ public class RestaurantController : ControllerBase
 	}
 
 	[HttpDelete("{id}")]
+	[Authorize(Roles = "Admin,Manager")]
 	public ActionResult DeleteRestaurant([FromRoute] int id)
 	{
 		var isDeleted = _restaurantService.DeleteRestaurant(id);
@@ -58,6 +63,7 @@ public class RestaurantController : ControllerBase
 	}
 
 	[HttpPut("{id}")]
+	[Authorize(Roles = "Admin,Manager")]
 	public ActionResult UpdateRestaurant([FromRoute] int id, [FromBody] UpdateRestaurantRequest request)
 	{
 		if(!ModelState.IsValid)

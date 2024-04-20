@@ -8,7 +8,7 @@ using RestaurantAPI.Infrastructure.Database;
 
 #nullable disable
 
-namespace RestaurantAPI.Migrations
+namespace RestaurantAPI.Infrastructure.Migrations
 {
     [DbContext(typeof(RestaurantDbContext))]
     partial class RestaurantDbContextModelSnapshot : ModelSnapshot
@@ -103,7 +103,6 @@ namespace RestaurantAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("HasDelivery")
@@ -133,6 +132,9 @@ namespace RestaurantAPI.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

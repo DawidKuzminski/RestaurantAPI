@@ -41,6 +41,10 @@ public class RestaurantDbContext : DbContext
 			.Property(d => d.Name)
 			.IsRequired()
 			.HasMaxLength(256);
+
+		modelBuilder.Entity<DishEntity>()
+			.Property(x => x.Price)
+			.IsRequired();
 	}
 
 	private static void OnAddressEntityCreating(ModelBuilder modelBuilder)

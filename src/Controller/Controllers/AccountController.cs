@@ -26,12 +26,12 @@ public class AccountController : ControllerBase
 	}
 
     [HttpPost("login")]
-    public ActionResult<string> Login([FromBody] LoginUserRequest request)
+    public ActionResult<LoginUserResponse> Login([FromBody] LoginUserRequest request)
     {
         var loginUserResult = _accountService.LoginUser(request);
         if(loginUserResult.IsNotSuccess)
             return BadRequest();
 
-        return Ok(loginUserResult.Data);
+        return Ok(new LoginUserResponse { Token = loginUserResult.Data });
     }
 }

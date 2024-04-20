@@ -1,4 +1,6 @@
-﻿using RestaurantAPI.Core.Entity;
+﻿using Microsoft.EntityFrameworkCore;
+using RestaurantAPI.Core.Entity;
+using RestaurantAPI.Core.Model;
 using RestaurantAPI.Infrastructure.Database;
 
 namespace RestaurantAPI.Infrastructure.Services;
@@ -47,12 +49,14 @@ public class InitDataSeeder
 					new DishEntity
 					{
 						Name = "Sake",
-						Price = 100
+						Price = 100,
+						Description = "Alcohol"
 					},
 					new DishEntity
 					{
 						Name = "Vodka",
-						Price = 100
+						Price = 100,
+						Description = "Alcohol"
 					}
 				},
 				Address = new AddressEntity
@@ -67,12 +71,11 @@ public class InitDataSeeder
 
 	private IReadOnlyList<RoleEntity> InitRoles()
 	{
-		return new List<RoleEntity>
-		{
-			new RoleEntity { Name = "User"},
-			new RoleEntity { Name = "Manager"},
-			new RoleEntity { Name = "Admin"}
-		};
+		return
+		[
+			new() { Name = Role.User.ToString(), Role = Role.User},
+			new() { Name = Role.Manager.ToString(), Role = Role.Manager},
+			new() { Name = Role.Admin.ToString(), Role = Role.Admin}
+		];
 	}
-
 }

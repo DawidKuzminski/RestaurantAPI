@@ -1,4 +1,6 @@
-﻿namespace RestaurantAPI.Core.Entity;
+﻿using RestaurantAPI.Core.Model;
+
+namespace RestaurantAPI.Core.Entity;
 public class UserEntity
 {
     public int Id { get; set; }
