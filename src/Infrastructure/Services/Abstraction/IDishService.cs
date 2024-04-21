@@ -1,12 +1,13 @@
 ﻿using RestaurantAPI.Core.Dto;
 using RestaurantAPI.Core.DTO;
+using RestaurantAPI.Infrastructure.Utilities;
 
 namespace RestaurantAPI.Infrastructure.Services.Abstraction;
 
 public interface IDishService
 {
-	int CreateDish(int restaurantId, CreateDishRequest request);
-	bool DeleteDishById(int restaurantId, int dishId);
-	IEnumerable<DishDto> GetAllDishes(int restaurantId);
-	DishDto GetDishById(int restaurantId, int dishId);
+	Task<IResult<CreateResourceResponse>> CreateDishAsync(int restaurantId, CreateDishRequest request);
+	Task<IResult> DeleteDishByIdAsync(int restaurantId, int dishId);
+	Task<IResult<IEnumerable<DishDto>>> GetAllDishesAsync(int restaurantId);
+	Task<IResult<DishDto>> GetDishByIdAsync(int restaurantId, int dishId);
 }

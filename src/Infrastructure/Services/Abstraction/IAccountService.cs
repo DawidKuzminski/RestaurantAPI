@@ -4,6 +4,6 @@ using RestaurantAPI.Infrastructure.Utilities;
 namespace RestaurantAPI.Infrastructure.Services.Abstraction;
 public interface IAccountService
 {
-	IResult<string> LoginUser(LoginUserRequest request);
-	public IResult RegisterUser(RegisterUserRequest request);
+	Task<IResult<LoginUserResponse>> LoginUserAsync(LoginUserRequest request);
+	Task<IResult> RegisterUserAsync(RegisterUserRequest request);
 }

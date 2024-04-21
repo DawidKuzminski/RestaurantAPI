@@ -16,9 +16,9 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("register")]
-	public ActionResult RegisterUser([FromBody] RegisterUserRequest request)
+	public async Task<ActionResult> RegisterUser([FromBody] RegisterUserRequest request)
 	{
-        var registerUserResult = _accountService.RegisterUser(request);
+        var registerUserResult = await _accountService.RegisterUserAsync(request);
         if (registerUserResult.IsNotSuccess)
             return BadRequest();
 
@@ -26,12 +26,12 @@ public class AccountController : ControllerBase
 	}
 
     [HttpPost("login")]
-    public ActionResult<LoginUserResponse> Login([FromBody] LoginUserRequest request)
+    public async Task<ActionResult<LoginUserResponse>> Login([FromBody] LoginUserRequest request)
     {
-        var loginUserResult = _accountService.LoginUser(request);
+        var loginUserResult = await _accountService.LoginUserAsync(request);
         if(loginUserResult.IsNotSuccess)
             return BadRequest();
 
-        return Ok(new LoginUserResponse { Token = loginUserResult.Data });
+        return Ok(loginUserResult.Data);
     }
 }

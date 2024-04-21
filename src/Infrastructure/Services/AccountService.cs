@@ -28,47 +28,50 @@ public class AccountService : IAccountService
 		_authenticationSettings = authenticationSettings;
 	}
 
-	public IResult RegisterUser(RegisterUserRequest request)
+	public async Task<IResult> RegisterUserAsync(RegisterUserRequest request)
 	{
-		bool isUserAlreadyExist = _dbContext.Users.Any(x => x.Email == request.Email);
+		bool isUserAlreadyExist = await _dbContext.Users.AnyAsync(x => x.Email == request.Email);
 		if (isUserAlreadyExist)
 			return Result.Success(ResultStatusCode.DataAlreadyExist);
 
 		var userEntity = _mapper.Map<UserEntity>(request);
 		userEntity.Password = _passwordHasher.HashPassword(userEntity, request.Password);
 
-		var userRole = _dbContext.Roles.FirstOrDefault(x => x.Role == Role.User);
+		var userRole = await _dbContext.Roles.FirstOrDefaultAsync(x => x.Role == Role.User);
 		if (userRole is null)
-			throw new NullReferenceException($"Cannot found role: {Role.User} - {Role.User.ToString()}");
+			return Result.Success(ResultStatusCode.DataAlreadyExist, $"Cannot found role: {Role.User} - {Role.User.ToString()}");
+
 		userEntity.RoleId = userRole.Id;
 		userEntity.Role = userRole;		
 
-		_dbContext.Users.Add(userEntity);
-		_dbContext.SaveChanges();
+		await _dbContext.Users.AddAsync(userEntity);
+		await _dbContext.SaveChangesAsync();
 
 		return Result.Success();
 	}
 
-	public IResult<string> LoginUser(LoginUserRequest request)
+	public async Task<IResult<LoginUserResponse>> LoginUserAsync(LoginUserRequest request)
 	{
-		var userEntity = _dbContext
+		var userEntity = await _dbContext
 			.Users
 			.Include(x => x.Role)
-			.FirstOrDefault(x => x.Email == request.Email);
+			.FirstOrDefaultAsync(x => x.Email == request.Email);
+
 		if (userEntity is null)
-			return Result<string>.Success(ResultStatusCode.NoDataFound);
+			return Result<LoginUserResponse>.Success(ResultStatusCode.NoDataFound);
 
 		var verifyPasswordResult = _passwordHasher.VerifyHashedPassword(userEntity, userEntity.Password, request.Password);
 		if (verifyPasswordResult == PasswordVerificationResult.Failed)
-			return Result<string>.Success(ResultStatusCode.NoDataFound);
+			return Result<LoginUserResponse>.Success(ResultStatusCode.NoDataFound);
 
 		var claims = new List<Claim>
 		{
-			new Claim(ClaimTypes.NameIdentifier, userEntity.Id.ToString()),
-			new Claim(ClaimTypes.Name, $"{userEntity.FirstName} {userEntity.LastName}"),
-			new Claim(ClaimTypes.Email, userEntity.Email),
-			new Claim(ClaimTypes.Role, userEntity.Role.Role.ToString()),
-			new Claim("nationality", userEntity.Nationality)
+			new (ClaimTypes.NameIdentifier, userEntity.Id.ToString()),
+			new (ClaimTypes.Name, $"{userEntity.FirstName} {userEntity.LastName}"),
+			new (ClaimTypes.Email, userEntity.Email),
+			new (ClaimTypes.Role, userEntity.Role.Role.ToString()),
+			new ("DateOfBirth", userEntity.DateOfBirth.Value.ToString()),
+			new ("nationality", userEntity.Nationality)
 		};
 
 		var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authenticationSettings.Jwk));
@@ -84,7 +87,7 @@ public class AccountService : IAccountService
 		var tokenHandler = new JwtSecurityTokenHandler();
 		var token = tokenHandler.WriteToken(securityToken);
 
-		return Result<string>.Success(token);
+		return Result<LoginUserResponse>.Success(new LoginUserResponse { Token = token });
 	}
 
 }

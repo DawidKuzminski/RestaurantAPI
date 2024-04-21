@@ -8,6 +8,8 @@ using RestaurantAPI.Core.DTO;
 using RestaurantAPI.Core.Entity;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
+using RestaurantAPI.Infrastructure.Utilities;
+using System.Security.Claims;
 
 namespace RestaurantAPI.Controllers;
 
@@ -23,53 +25,60 @@ public class RestaurantController : ControllerBase
 	}
 
 	[HttpGet]
-    public ActionResult<IEnumerable<RestauantDto>> GetAll()
+	[Authorize(Policy = "AtLeast16")]
+    public async Task<ActionResult<IEnumerable<RestauantDto>>> GetAll()
 	{
-		var getAllRestaurants = _restaurantService.GetAll();
-		if (getAllRestaurants is null)
+		var getAllResult = await _restaurantService.GetAllAsync();
+		if(getAllResult.IsNotSuccess)
 			return NotFound();
 
-		return Ok(getAllRestaurants);
+		return Ok(getAllResult.Data);
 	}
 
 	[HttpGet("{id}")]
-	public ActionResult<IEnumerable<RestauantDto>> GetById([FromRoute] int id)
+	public async Task<ActionResult<IEnumerable<RestauantDto>>> GetById([FromRoute] int id)
 	{
-		var restaurant = _restaurantService.GetById(id);
-		if (restaurant is null)
+		var getResult = await _restaurantService.GetByIdAsync(id);
+		if (getResult.IsNotSuccess)
 			return NotFound();		
 
-		return Ok(restaurant);
+		return Ok(getResult.Data);
 	}
 
 	[HttpPost]
 	[Authorize(Roles = "Admin,Manager")]
-	public ActionResult CreateRestaurant([FromBody] CreateRestaurantRequest request)
+	public async Task<ActionResult> CreateRestaurant([FromBody] CreateRestaurantRequest request)
 	{
 		if(!ModelState.IsValid)
 			return BadRequest(ModelState);
 
-		var restaurantId = _restaurantService.CreateRestaurant(request);
+		var userId = int.Parse(User.FindFirst(x => x.Type == ClaimTypes.NameIdentifier).Value);
+		var createRestaurantResult = await _restaurantService.CreateRestaurantAsync(request, userId);
+		if (createRestaurantResult.IsNotSuccess)
+			return BadRequest();
 
-		return Created($"/api/restaurant/{restaurantId}", null);
+		return Created($"/api/restaurant/{createRestaurantResult.Data}", null);
 	}
 
 	[HttpDelete("{id}")]
 	[Authorize(Roles = "Admin,Manager")]
-	public ActionResult DeleteRestaurant([FromRoute] int id)
+	public async Task<ActionResult> DeleteRestaurant([FromRoute] int id)
 	{
-		var isDeleted = _restaurantService.DeleteRestaurant(id);
-		return isDeleted ? NoContent() : BadRequest();
+		var deleteRestaurantResult = await _restaurantService.DeleteRestaurantAsync(id);
+		return deleteRestaurantResult.IsSuccess ? NoContent() : BadRequest();
 	}
 
 	[HttpPut("{id}")]
 	[Authorize(Roles = "Admin,Manager")]
-	public ActionResult UpdateRestaurant([FromRoute] int id, [FromBody] UpdateRestaurantRequest request)
+	public async Task<ActionResult> UpdateRestaurant([FromRoute] int id, [FromBody] UpdateRestaurantRequest request)
 	{
 		if(!ModelState.IsValid)
 			return BadRequest(ModelState);
 
-		var updatedRestaurant = _restaurantService.UpdateRestaurant(id, request);
-		return Ok(updatedRestaurant);
+		var updatedRestaurantResult = await _restaurantService.UpdateRestaurantAsync(id, request);
+		if (updatedRestaurantResult.IsNotSuccess)
+			return NotFound();
+
+		return Ok(updatedRestaurantResult.Data);
 	}
 }

@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +13,7 @@ using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Middleware;
 using RestaurantAPI.Infrastructure.Services;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
+using RestaurantAPI.Infrastructure.Validation;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +37,13 @@ builder.Services.AddAuthentication(opt =>
 		ValidAudience = authSettings.Issuer,
 		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authSettings.Jwk))
 	};
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, ValidateMinAgeRequirementHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ValidateResourceOperationRequirementHandler>();
+builder.Services.AddAuthorization(opt =>
+{
+	opt.AddPolicy("AtLeast16", builder => builder.AddRequirements(new ValidateMinAgeRequirement(16)));
 });
 
 // Add services to the container.

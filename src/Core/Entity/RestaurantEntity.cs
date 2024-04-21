@@ -12,4 +12,6 @@ public class RestaurantEntity
 	public int AddressId { get; set; }
 	public virtual AddressEntity Address { get; set; }
 	public virtual List<DishEntity> Dishes { get; set; }
+    public int OwnerId { get; set; }
+    public virtual UserEntity Owner { get; set; }
 }
