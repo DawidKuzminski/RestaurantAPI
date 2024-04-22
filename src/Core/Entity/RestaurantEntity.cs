@@ -1,6 +1,8 @@
-﻿namespace RestaurantAPI.Core.Entity;
+﻿using RestaurantAPI.Core.Model;
 
-public class RestaurantEntity
+namespace RestaurantAPI.Core.Entity;
+
+public class RestaurantEntity : IBaseSortItem
 {
 	public int Id { get; set; }
 	public string Name { get; set; }

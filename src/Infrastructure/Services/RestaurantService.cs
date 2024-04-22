@@ -1,14 +1,16 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using RestaurantAPI.Core.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantAPI.Core.Dto;
-using RestaurantAPI.Core.DTO;
 using RestaurantAPI.Core.Entity;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
 using RestaurantAPI.Infrastructure.Utilities;
 using RestaurantAPI.Infrastructure.Validation;
+using System.Linq.Expressions;
+using RestaurantAPI.Core.Model;
 
 namespace RestaurantAPI.Infrastructure.Services;
 public class RestaurantService : IRestaurantService
@@ -42,18 +44,54 @@ public class RestaurantService : IRestaurantService
 		return Result<RestauantDto>.Success(_mapper.Map<RestauantDto>(restaurant));
 	}
 
-	public async Task<IResult<IEnumerable<RestauantDto>>> GetAllAsync()
+	public async Task<IResult<PageResult<RestauantDto>>> GetAllAsync(RestaurantGetAllQuery query)
 	{
-		var restaurants = await _dbContext
+		var queryValidator = new RestaurantGetAllQueryValidator();
+		if(!queryValidator.Validate(query).IsValid)
+		{
+			return Result<PageResult<RestauantDto>>.Success(ResultStatusCode.BadRequest);
+		}
+
+		var container = _dbContext
 			.Restaurants
+			.AsNoTracking()
 			.Include(r => r.Address)
-			.Include(r => r.Dishes)
+			.Include(r => r.Dishes);
+
+		int elementsToSkip = query.PageSize * (query.PageNumber - 1);
+
+		IQueryable<RestaurantEntity> restaurantsAll = null;
+		if (!string.IsNullOrEmpty(query.SearchPhrase))
+			restaurantsAll = container
+			.Where(x => x.Name.ToLower().Contains(query.SearchPhrase) ||
+				(x.Description != null && x.Description.Contains(query.SearchPhrase)));
+		else
+			restaurantsAll = container;
+
+		var sortSelectors = new Dictionary<SortBy, Expression<Func<IBaseSortItem, object>>>
+		{
+			{ SortBy.Default, x => x.Id },
+			{ SortBy.Name, x => x.Name }
+		};
+
+		var sortSelectorExpression = sortSelectors.FirstOrDefault(x => x.Key == query.SortBy).Value;
+
+		if (query.SortBy is not null || query.SortBy != SortBy.Default)
+			restaurantsAll = query.SortDirection == SortDirection.Asc ?
+				(IQueryable<RestaurantEntity>)restaurantsAll.OrderBy(sortSelectorExpression) :
+				(IQueryable<RestaurantEntity>)restaurantsAll.OrderByDescending(sortSelectorExpression);
+
+		var restaurants = await restaurantsAll
+			.Skip(elementsToSkip)
+			.Take(query.PageSize)
 			.ToListAsync();
 
 		if (restaurants is null)
-			return Result<IEnumerable<RestauantDto>>.Success(ResultStatusCode.NoDataFound);
+			return Result<PageResult<RestauantDto>>.Success(ResultStatusCode.NoDataFound);
 
-		return Result<IEnumerable<RestauantDto>>.Success(_mapper.Map<List<RestauantDto>>(restaurants));
+		PageResult<RestauantDto> pageResult = new(_mapper.Map<List<RestauantDto>>(restaurants), restaurantsAll.Count(), query.PageSize, query.PageNumber);
+
+		return Result<PageResult<RestauantDto>>.Success(pageResult);
 	}
 
 	public async Task<Utilities.IResult<CreateResourceResponse>> CreateRestaurantAsync(CreateRestaurantRequest request)

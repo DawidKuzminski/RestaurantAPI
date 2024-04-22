@@ -12,7 +12,8 @@ public enum ResultStatusCode
     Ok = 0,
 	NoDataFound,
 	DataAlreadyExist,
-	AccessForbidden
+	AccessForbidden,
+	BadRequest
 }
 
 public interface IResult

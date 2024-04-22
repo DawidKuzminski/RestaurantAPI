@@ -8,7 +8,7 @@ public interface IRestaurantService
 {
 	Task<IResult<CreateResourceResponse>> CreateRestaurantAsync(CreateRestaurantRequest request);
 	Task<IResult> DeleteRestaurantAsync(int id);
-	Task<IResult<IEnumerable<RestauantDto>>> GetAllAsync();
+	Task<IResult<PageResult<RestauantDto>>> GetAllAsync(RestaurantGetAllQuery query);
 	Task<IResult<RestauantDto>> GetByIdAsync(int id);
 	Task<IResult<RestauantDto>> UpdateRestaurantAsync(int id, UpdateRestaurantRequest request);
 }

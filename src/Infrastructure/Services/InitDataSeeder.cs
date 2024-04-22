@@ -23,50 +23,7 @@ public class InitDataSeeder
 				_dbContext.Roles.AddRange(InitRoles());
 				_dbContext.SaveChanges();
 			}
-
-			if (!_dbContext.Restaurants.Any())
-			{
-				_dbContext.Restaurants.AddRange(GetInitRestaurants());
-				_dbContext.SaveChanges();
-			}
 		}
-	}
-
-	private IReadOnlyList<RestaurantEntity> GetInitRestaurants()
-	{
-		return new List<RestaurantEntity>
-		{
-			new RestaurantEntity
-			{
-				Name = "Zorro - Drink and Drink",
-				Category = "Alcohol",
-				Description = "Only alcohol - food not allowed.",
-				ContactEmail = "contact@zorodad.com",
-				ContactPhone = "333 333 333",
-				HasDelivery = false,
-				Dishes = new List<DishEntity>
-				{
-					new DishEntity
-					{
-						Name = "Sake",
-						Price = 100,
-						Description = "Alcohol"
-					},
-					new DishEntity
-					{
-						Name = "Vodka",
-						Price = 100,
-						Description = "Alcohol"
-					}
-				},
-				Address = new AddressEntity
-				{
-					City = "Zielona Góra",
-					Street = "Szklanki i szkoło 3",
-					PostalCode = "33-333"
-				}
-			}
-		};
 	}
 
 	private IReadOnlyList<RoleEntity> InitRoles()

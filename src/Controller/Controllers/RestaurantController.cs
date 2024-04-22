@@ -1,15 +1,8 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RestaurantAPI.Core.Dto;
 using RestaurantAPI.Core.DTO;
-using RestaurantAPI.Core.Entity;
-using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
-using RestaurantAPI.Infrastructure.Utilities;
-using System.Security.Claims;
 
 namespace RestaurantAPI.Controllers;
 
@@ -20,16 +13,16 @@ public class RestaurantController : ControllerBase
 {
 	private readonly IRestaurantService _restaurantService;
 	public RestaurantController(IRestaurantService restaurantService)
-    {
+	{
 		_restaurantService = restaurantService;
 	}
 
 	[HttpGet]
 	[Authorize(Policy = "AtLeast16")]
-    public async Task<ActionResult<IEnumerable<RestauantDto>>> GetAll()
+	public async Task<ActionResult<PageResult<RestauantDto>>> GetAll([FromQuery] RestaurantGetAllQuery query)
 	{
-		var getAllResult = await _restaurantService.GetAllAsync();
-		if(getAllResult.IsNotSuccess)
+		var getAllResult = await _restaurantService.GetAllAsync(query);
+		if (getAllResult.IsNotSuccess)
 			return NotFound();
 
 		return Ok(getAllResult.Data);
@@ -40,7 +33,7 @@ public class RestaurantController : ControllerBase
 	{
 		var getResult = await _restaurantService.GetByIdAsync(id);
 		if (getResult.IsNotSuccess)
-			return NotFound();		
+			return NotFound();
 
 		return Ok(getResult.Data);
 	}
@@ -49,7 +42,7 @@ public class RestaurantController : ControllerBase
 	[Authorize(Roles = "Admin,Manager")]
 	public async Task<ActionResult> CreateRestaurant([FromBody] CreateRestaurantRequest request)
 	{
-		if(!ModelState.IsValid)
+		if (!ModelState.IsValid)
 			return BadRequest(ModelState);
 
 		var createRestaurantResult = await _restaurantService.CreateRestaurantAsync(request);
@@ -71,7 +64,7 @@ public class RestaurantController : ControllerBase
 	[Authorize(Roles = "Admin,Manager")]
 	public async Task<ActionResult> UpdateRestaurant([FromRoute] int id, [FromBody] UpdateRestaurantRequest request)
 	{
-		if(!ModelState.IsValid)
+		if (!ModelState.IsValid)
 			return BadRequest(ModelState);
 
 		var updatedRestaurantResult = await _restaurantService.UpdateRestaurantAsync(id, request);
