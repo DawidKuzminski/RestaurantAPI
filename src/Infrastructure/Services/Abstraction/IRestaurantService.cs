@@ -6,7 +6,7 @@ namespace RestaurantAPI.Infrastructure.Services.Abstraction;
 
 public interface IRestaurantService
 {
-	Task<IResult<CreateResourceResponse>> CreateRestaurantAsync(CreateRestaurantRequest request, int userId);
+	Task<IResult<CreateResourceResponse>> CreateRestaurantAsync(CreateRestaurantRequest request);
 	Task<IResult> DeleteRestaurantAsync(int id);
 	Task<IResult<IEnumerable<RestauantDto>>> GetAllAsync();
 	Task<IResult<RestauantDto>> GetByIdAsync(int id);

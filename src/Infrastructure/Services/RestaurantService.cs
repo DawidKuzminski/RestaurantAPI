@@ -8,6 +8,7 @@ using RestaurantAPI.Core.Entity;
 using RestaurantAPI.Infrastructure.Database;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
 using RestaurantAPI.Infrastructure.Utilities;
+using RestaurantAPI.Infrastructure.Validation;
 
 namespace RestaurantAPI.Infrastructure.Services;
 public class RestaurantService : IRestaurantService
@@ -16,13 +17,15 @@ public class RestaurantService : IRestaurantService
 	private readonly IMapper _mapper;
 	private readonly ILogger<RestaurantService> _logger;
 	private readonly IAuthorizationService _authorizationService;
+	private readonly IUserContextService _userContextService;
 
-	public RestaurantService(RestaurantDbContext dbContext, IMapper mapper, ILogger<RestaurantService> logger, IAuthorizationService authorizationService)
+	public RestaurantService(RestaurantDbContext dbContext, IMapper mapper, ILogger<RestaurantService> logger, IAuthorizationService authorizationService, IUserContextService userContextService)
 	{
 		_dbContext = dbContext;
 		_mapper = mapper;
 		_logger = logger;
 		_authorizationService = authorizationService;
+		_userContextService = userContextService;
 	}
 
 	public async Task<IResult<RestauantDto>> GetByIdAsync(int id)
@@ -53,10 +56,14 @@ public class RestaurantService : IRestaurantService
 		return Result<IEnumerable<RestauantDto>>.Success(_mapper.Map<List<RestauantDto>>(restaurants));
 	}
 
-	public async Task<Utilities.IResult<CreateResourceResponse>> CreateRestaurantAsync(CreateRestaurantRequest request, int userId)
+	public async Task<Utilities.IResult<CreateResourceResponse>> CreateRestaurantAsync(CreateRestaurantRequest request)
 	{
+		var requestUserId = _userContextService.GetUserId;
+		if (requestUserId is null)
+			return Result<CreateResourceResponse>.Success(ResultStatusCode.AccessForbidden);
+
 		var restaurant = _mapper.Map<RestaurantEntity>(request);
-		restaurant.OwnerId = userId;
+		restaurant.OwnerId = requestUserId.Value;
 
 		var entityEntry = await _dbContext.AddAsync(restaurant);
 		await _dbContext.SaveChangesAsync();
@@ -73,6 +80,10 @@ public class RestaurantService : IRestaurantService
 		if (restaurant is null)
 			return Result.Success(ResultStatusCode.NoDataFound);
 
+		var authorizationResult = await _authorizationService.AuthorizeAsync(_userContextService.User, restaurant, new ValidateResourceOperationRequirement(ResourceOperation.Delete));
+		if (!authorizationResult.Succeeded)
+			return Result<RestauantDto>.Success(ResultStatusCode.AccessForbidden);
+
 		_dbContext.Restaurants.Remove(restaurant);
 		await _dbContext.SaveChangesAsync();
 
@@ -87,6 +98,10 @@ public class RestaurantService : IRestaurantService
 
 		if (restaurant is null)
 			return Result<RestauantDto>.Success(ResultStatusCode.NoDataFound);
+
+		var authorizationResult = await _authorizationService.AuthorizeAsync(_userContextService.User, restaurant, new ValidateResourceOperationRequirement(ResourceOperation.Update));
+		if (!authorizationResult.Succeeded)
+			return Result<RestauantDto>.Success(ResultStatusCode.AccessForbidden);
 
 		var updatedEntity = _mapper.Map(request, restaurant);
 		_dbContext.Restaurants.Update(updatedEntity);

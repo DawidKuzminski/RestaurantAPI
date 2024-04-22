@@ -52,8 +52,7 @@ public class RestaurantController : ControllerBase
 		if(!ModelState.IsValid)
 			return BadRequest(ModelState);
 
-		var userId = int.Parse(User.FindFirst(x => x.Type == ClaimTypes.NameIdentifier).Value);
-		var createRestaurantResult = await _restaurantService.CreateRestaurantAsync(request, userId);
+		var createRestaurantResult = await _restaurantService.CreateRestaurantAsync(request);
 		if (createRestaurantResult.IsNotSuccess)
 			return BadRequest();
 
