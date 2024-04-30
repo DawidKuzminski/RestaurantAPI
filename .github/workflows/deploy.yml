@@ -29,13 +29,12 @@ jobs:
     needs: build
     environment: 
       name: 'Dev'
-      url: ${{ steps.deploy-to-azure.outputs.webapp-url }}
+      url: ${{steps.deploy-to-azure.outputs.webapp-url}}
     steps:
     - name: Download a Build Artifact
       uses: actions/download-artifact@v4.1.7
       with:
         name: restaurant-api-artifact
-        path: ${{env.DOTNET_ROOT}}/myapp
     - name: Deploy Azure WebApp
       id: deploy-to-azure
       uses: Azure/webapps-deploy@v3.0.1
