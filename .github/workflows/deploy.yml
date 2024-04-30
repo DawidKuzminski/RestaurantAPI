@@ -16,12 +16,13 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
       - name: Publish
-        run: dotnet publish -c Release -o ${{ env:DOTNET_ROOT }}/api
+        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
         with: 
           name: restaurant-api-artifact
-          path: ${{ env:DOTNET_ROOT }}/api
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy-dev:
     runs-on: ubuntu-latest
@@ -34,13 +35,13 @@ jobs:
       uses: actions/download-artifact@v4.1.7
       with:
         name: restaurant-api-artifact
-        path: ${{ env:DOTNET_ROOT }}/api
+        path: ${{env.DOTNET_ROOT}}/myapp
     - name: Deploy Azure WebApp
       id: deploy-to-azure
       uses: Azure/webapps-deploy@v3.0.1
       with:
         app-name: 'restaurant-api-app-daski'
-        publish-profile: ${{ secrets.PUBLISH_PROFILE_DEV }}
+        publish-profile: ${{secrets.PUBLISH_PROFILE_DEV}}
 
       
         
