@@ -20,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
 var authSettings = new AuthenticationSettings();
-builder.Configuration.GetSection("Authentication").Bind(authSettings);
+builder.Configuration.GetSection("Authentication").Bind(authSettings)
 
 builder.Services.AddAuthentication(opt =>
 {
