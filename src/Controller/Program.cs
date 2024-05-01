@@ -17,7 +17,10 @@ using RestaurantAPI.Infrastructure.Validation;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+builder.Host.UseNLog();
 
 var authSettings = new AuthenticationSettings();
 builder.Configuration.GetSection("Authentication").Bind(authSettings);
@@ -49,7 +52,7 @@ builder.Services.AddAuthorization(opt =>
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddSingleton(authSettings);
-var databaseConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
+var databaseConnStr = builder.Configuration.GetConnectionString("RestaurantDbConnection");
 builder.Services.AddDbContext<RestaurantDbContext>(opt => opt.UseSqlServer(databaseConnStr, x => x.MigrationsAssembly("RestaurantAPI.Infrastructure")));
 builder.Services.AddScoped<InitDataSeeder>();
 
@@ -65,19 +68,27 @@ builder.Services.AddScoped<IValidator<RestaurantGetAllQuery>, RestaurantGetAllQu
 
 builder.Services.AddSwaggerGen();
 
-builder.Logging.ClearProviders();
-builder.Host.UseNLog();
+var config = builder.Configuration;
+builder.Services.AddCors(opt =>
+{
+	opt.AddPolicy("FrontendLocal", builder =>
+	{
+		builder.AllowAnyMethod()
+		.AllowAnyHeader()
+		.WithOrigins(config["AllowedOrigins"]);
+	});
+});
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
+app.UseCors("FrontendLocal");
+app.UseStaticFiles();
 
 using (var scope = app.Services.CreateScope())
 {
 	InitDataSeeder seeder = scope.ServiceProvider.GetRequiredService<InitDataSeeder>();
 	seeder.Seed();
 }
-
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
