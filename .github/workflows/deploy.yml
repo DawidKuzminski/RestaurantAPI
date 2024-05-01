@@ -14,8 +14,10 @@ jobs:
           dotnet-version: 8.0.x
       - name: Restore NuGets
         run: dotnet restore
+        
       - name: Build
         run: dotnet build --configuration Release --no-restore
+        
       - name: Publish
         run: dotnet publish -c Release -o ./myapp
 
@@ -36,10 +38,11 @@ jobs:
       uses: actions/download-artifact@v4.1.7
       with:
         name: restaurant-api-artifact
+        path: ./downloaded-artifact
     - name: Deploy Azure WebApp
       id: deploy-to-azure
       uses: Azure/webapps-deploy@v3.0.1
       with:
         app-name: ${{env.AZURE_WEBAPP_NAME}}
         publish-profile: ${{secrets.AZURE_WEBAPP_PUBLISH_PROFILE}}
-        package: './restaurant-api-artifact'
+        package: './downloaded-artifact'
