@@ -1,0 +1,48 @@
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4.0.0
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore NuGets
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+        
+      - name: Publish
+        run: dotnet publish -c Release -o ./myapp
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.3.3
+        with: 
+          name: restaurant-api-artifact
+          path: ./myapp
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: 
+      name: 'dev'
+      url: ${{steps.deploy-to-azure.outputs.webapp-url}}
+    steps:
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: restaurant-api-artifact
+        path: ./downloaded-artifact
+    - name: Deploy Azure WebApp
+      id: deploy-to-azure
+      uses: Azure/webapps-deploy@v3.0.1
+      with:
+        app-name: ${{env.AZURE_WEBAPP_NAME}}
+        publish-profile: ${{secrets.AZURE_WEBAPP_PUBLISH_PROFILE}}
+        package: './downloaded-artifact'
