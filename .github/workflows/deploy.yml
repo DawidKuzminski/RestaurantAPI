@@ -17,13 +17,13 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish -c Release -o ./myapp
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
         with: 
           name: restaurant-api-artifact
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ./myapp
 
   deploy-dev:
     runs-on: ubuntu-latest
