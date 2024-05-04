@@ -15,6 +15,7 @@ using RestaurantAPI.Infrastructure.Services;
 using RestaurantAPI.Infrastructure.Services.Abstraction;
 using RestaurantAPI.Infrastructure.Validation;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +51,9 @@ builder.Services.AddAuthorization(opt =>
 });
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services
+	.AddControllers()
+	.AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 builder.Services.AddSingleton(authSettings);
 var databaseConnStr = builder.Configuration.GetConnectionString("RestaurantDbConnection");
 builder.Services.AddDbContext<RestaurantDbContext>(opt => opt.UseSqlServer(databaseConnStr, x => x.MigrationsAssembly("RestaurantAPI.Infrastructure")));
