@@ -1,25 +1,29 @@
+name: Publish
+
 on:
+  workflow_dispatch:    
   push:
     branches: [master]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     environment: dev
     steps:
       - uses: actions/checkout@master
-      - name: Setup .NET Core SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4.0.0
         with:
-          dotnet-version: 8.0.x
-      - name: Restore NuGets
-        run: dotnet restore
+          dotnet-version: '8.0.x'
+          
+      - name: Restore
+        run: dotnet restore ./RestaurantAPI.sln
         
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ./RestaurantAPI.sln --configuration Release --no-restore
         
       - name: Publish
-        run: dotnet publish -c Release -o ./myapp
+        run: dotnet publish ./RestaurantAPI.sln --configuration Release  --no-build -o ./myapp
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
@@ -28,7 +32,7 @@ jobs:
           path: ./myapp
 
   deploy-dev:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build
     environment: 
       name: 'dev'
